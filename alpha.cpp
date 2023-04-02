@@ -12,11 +12,11 @@ int alphaBlend(blend_t* blend)
 
     for (int y = 0; y < blend->fr_hg; y++)
     {
-        if (y + blend->y_pos > blend->bk_hg) break;
+        if (y + blend->y_pos >= blend->bk_hg) break;
         
         for (int x = 0; x < blend->fr_wd; x+= 4)
         {
-            if (x + blend->x_pos + 3 > blend->bk_wd) break;
+            if (x + blend->x_pos + 3 >= blend->bk_wd) break;
             
             for (int i = 0; i < 100; i++)
             {

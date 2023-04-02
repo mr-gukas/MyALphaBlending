@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
                 win.window.close();
 
         }
-
+        
         alphaBlend(&blend);
         
         image_t image = {};
