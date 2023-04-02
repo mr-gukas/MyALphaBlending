@@ -7,6 +7,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <sstream> // for std::ostringstream
 #include <stdlib.h>
+#include <immintrin.h>
 
 const int x0 = 300;
 const int y0 = 225;
@@ -50,7 +51,6 @@ int blendDtor(blend_t* blend);
 
 int isNumber(char* str);
 int alphaBlend(blend_t* blend);
-unsigned char getColor(unsigned char fr_clr, unsigned char bk_clr, unsigned char transp);
 
 int setFps(window_t* win);
 int windowCtor(window_t* win,  blend_t* blend);

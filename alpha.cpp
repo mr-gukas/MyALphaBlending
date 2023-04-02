@@ -4,51 +4,64 @@
 int alphaBlend(blend_t* blend)
 {
     if (blend == NULL) return 1;
+    
+    const unsigned char zero = 128; 
+
+    const __m128i _0   = _mm_set1_epi8(0);
+    const __m128i _255 = _mm_cvtepu8_epi16(_mm_set1_epi8(0xFF));
 
     for (int y = 0; y < blend->fr_hg; y++)
     {
-        if (y + blend->y_pos >= blend->bk_hg) break;
-
-        for (int x = 0; x < blend->fr_wd; x++)
+        if (y + blend->y_pos > blend->bk_hg) break;
+        
+        for (int x = 0; x < blend->fr_wd; x+= 4)
         {
-            if (x + blend->x_pos >= blend->bk_wd) break;
+            if (x + blend->x_pos + 3 > blend->bk_wd) break;
             
             for (int i = 0; i < 100; i++)
             {
-                unsigned int fr_clr = blend->front[x + y * blend->fr_wd];
-                unsigned int bk_clr = blend->back [x + blend->x_pos + 
-                                                  (y + blend->y_pos) * blend->bk_wd];
-                
+                __m128i fr_clr = _mm_load_si128((__m128i*) &blend->front[x + y * blend->fr_wd]);
+                __m128i bk_clr = _mm_load_si128((__m128i*) &blend->front[x + blend->x_pos + (y + blend->y_pos) * blend->bk_wd]);
 
-                unsigned char fr_al = fr_clr >> 24;
-                unsigned char bk_al = bk_clr >> 24;
+                __m128i FR     = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) fr_clr);
+                __m128i BK     = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) bk_clr);
                 
-                unsigned int new_clr =  bk_al << 24;
+                fr_clr = _mm_cvtepu8_epi16(fr_clr);
+                bk_clr = _mm_cvtepu8_epi16(bk_clr);
+                FR     = _mm_cvtepu8_epi16(FR);
+                BK     = _mm_cvtepu8_epi16(BK);
                 
-                for (int idx = 0; idx < 17; idx += 8)
-                {
-                    
-                    unsigned char FR_CLR = ((0xFF << idx) & fr_clr) >> idx;
-                    unsigned char BK_CLR = ((0xFF << idx) & bk_clr) >> idx;
+                static const __m128i mask = _mm_set_epi8(zero, 14, zero, 14, zero, 14, zero, 14,
+                                                         zero,  6, zero,  6, zero,  6, zero,  6); 
 
-                    new_clr += getColor(FR_CLR, BK_CLR, fr_al) << idx;
-                }
+
+                __m128i a = _mm_shuffle_epi8(fr_clr, mask); 
+                __m128i A = _mm_shuffle_epi8(FR,     mask); 
+
                 
-                blend->new_img[x + blend->x_pos + (y + blend->y_pos) * blend->bk_wd] =
-                    new_clr;
+                fr_clr = _mm_mullo_epi16(fr_clr, a);
+                FR     = _mm_mullo_epi16(FR,     A);
+                bk_clr = _mm_mullo_epi16(bk_clr, _mm_sub_epi16(_255, a));
+                BK     = _mm_mullo_epi16(BK,     _mm_sub_epi16(_255, A));
+                
+                __m128i sum = _mm_add_epi16(fr_clr, bk_clr);
+                __m128i SUM = _mm_add_epi16(FR,     BK    );
+
+                static const __m128i moveSum = _mm_set_epi8(zero, zero, zero, zero, zero, zero, zero, zero,
+                                                              15,   13,   11,   9,     7,    5,    3,    1);
+
+                sum = _mm_shuffle_epi8(sum, moveSum);
+                SUM = _mm_shuffle_epi8(SUM, moveSum);
+
+                
+                __m128i clr = (__m128i) _mm_movelh_ps((__m128) sum, (__m128) SUM);
+                
+                _mm_store_si128((__m128i*) &blend->new_img[x + blend->x_pos + (y + blend->y_pos) * blend->bk_wd], clr);
             }
         }
     }
 
     return 0;
-}
-
-
-unsigned char getColor(unsigned char fr_clr, unsigned char bk_clr, 
-                       unsigned char transp)
-{
-    return ((unsigned int) fr_clr * transp + 
-            (unsigned int) bk_clr * (255 - transp)) / 255;
 }
 
 int blendCtor(blend_t* blend, const char* front_name, const char* back_name, 
