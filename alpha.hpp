@@ -7,7 +7,8 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <sstream> // for std::ostringstream
 #include <stdlib.h>
-#include <immintrin.h>
+#include <emmintrin.h>                                                          
+#include <smmintrin.h>  
 
 const int x0 = 300;
 const int y0 = 225;

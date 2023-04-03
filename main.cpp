@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     }
 
     window_t win = {};
-    windowCtor(&win,&blend);
+    windowCtor(&win, &blend);
     
     int first = 1;
     while (win.window.isOpen())
@@ -35,18 +35,19 @@ int main(int argc, char* argv[])
                 win.window.close();
 
         }
-        
+
+        blendCtor(&blend, argv[1], argv[2], atoi(argv[3]), atoi(argv[4]));
         alphaBlend(&blend);
-        
-        image_t image = {};
-        imageCtor(&image, &blend); 
-        
+
         if (first)
         {
-            image.alpha_blend.saveToFile("../img/1.png");
+            blend.bk_img.saveToFile("../img/avx.png");
             first = 0;
         }
 
+        image_t image = {};
+        imageCtor(&image, &blend); 
+        
         setFps(&win);
 
         win.window.clear();
