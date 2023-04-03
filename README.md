@@ -51,10 +51,10 @@ add_compile_options(-Ofast)
 
 **FPS rate:**
 
-| Optimization key | No optimizations | AVX2 float  | 
+| Optimization key | No optimizations | AVX2        | 
 |------------------|------------------|-------------|
-|       None       |        6         |      25     |
-|       -Ofast     |        15        |      94     |
+|       None       |        11        |      40     |
+|       -O2        |        40        |      180    |
 
 ## Conclusion
 
