@@ -54,7 +54,7 @@ add_compile_options(-Ofast)
 | Optimization key | No optimizations | SSE         | 
 |------------------|------------------|-------------|
 |       None       |        11        |      40     |
-|       -O2        |        40        |      180    |
+|       -O2        |        35        |      180    |
 
 ## Conclusion
 We observe a speedup of the program by 3-4 times when using SIMD SSE.
