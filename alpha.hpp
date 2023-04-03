@@ -5,13 +5,15 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <sstream> // for std::ostringstream
+#include <sstream> // for ostringstream
 #include <stdlib.h>
 #include <emmintrin.h>                                                          
 #include <smmintrin.h>  
 
-const int x0 = 300;
-const int y0 = 225;
+const __m128i   _0 = _mm_set_epi8  (0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0);
+const __m128i _255 = _mm_set1_epi16(0x00FF);    
+
+const unsigned char zero = 0x80;
 
 struct blend_t 
 {

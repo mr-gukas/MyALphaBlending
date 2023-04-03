@@ -1,13 +1,42 @@
 #include "alpha.hpp"
 
+inline void calcPxl(blend_t* blend, int x, int y, __m128i* clr)
+{
+    __m128i fr_clr = _mm_load_si128((__m128i *) &blend->front[y * blend->fr_wd + x]);
+    __m128i bk_clr = _mm_load_si128((__m128i *) &blend->back[(y + blend->y_pos) * blend->bk_wd + x + blend->x_pos]);
+
+    __m128i upFr_clr = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) fr_clr);
+    __m128i upBk_clr = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) bk_clr);
+
+    fr_clr   = _mm_cvtepu8_epi16(fr_clr);
+    upFr_clr = _mm_cvtepu8_epi16(upFr_clr);
+    bk_clr   = _mm_cvtepu8_epi16(bk_clr);
+    upBk_clr = _mm_cvtepu8_epi16(upBk_clr);
+
+    static const __m128i moveA = _mm_set_epi8 (zero, 14, zero, 14, zero, 14, zero, 14,
+                                               zero,  6, zero,  6, zero,  6, zero,  6);
+    __m128i lowTransp = _mm_shuffle_epi8 (fr_clr, moveA);                           
+    __m128i upTransp  = _mm_shuffle_epi8 (upFr_clr, moveA);
+
+    fr_clr   = _mm_mullo_epi16 (fr_clr, lowTransp);                                            
+    upFr_clr = _mm_mullo_epi16 (upFr_clr, upTransp);
+    bk_clr   = _mm_mullo_epi16 (bk_clr, _mm_sub_epi16 (_255, lowTransp));                     
+    upBk_clr = _mm_mullo_epi16 (upBk_clr, _mm_sub_epi16 (_255, upTransp));
+
+    __m128i sumLow = _mm_add_epi16 (fr_clr, bk_clr);                                  
+    __m128i sumUp  = _mm_add_epi16 (upFr_clr, upBk_clr);
+
+    static const __m128i moveSum = _mm_set_epi8 ( zero,  zero,  zero, zero, zero, zero, zero, zero,
+                                                    15,    13,    11,    9,    7,    5,    3,    1);
+    sumLow = _mm_shuffle_epi8 (sumLow, moveSum);                                
+    sumUp  = _mm_shuffle_epi8 (sumUp, moveSum);
+
+    *clr = (__m128i) _mm_movelh_ps ((__m128) sumLow, (__m128) sumUp);
+}
+
 
 int alphaBlend(blend_t* blend)
 {
-    const unsigned char zero = 0x80;
-
-    const __m128i   _0 =_mm_set_epi8(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0);
-    const __m128i _255 = _mm_set1_epi16(0x00FF);    
-
     for (unsigned y = 0; y < blend->fr_hg; ++y)
     {
         if (y + blend->y_pos >= blend->bk_hg) break;
@@ -16,43 +45,14 @@ int alphaBlend(blend_t* blend)
         {
             if (x + blend->x_pos + 3 >= blend->bk_wd) break;
             
-            __m128i color = _mm_set1_epi8(0xFF);
+            __m128i clr = _mm_set1_epi8(0xFF);
 
             for (int i = 0; i < 100; i++)
             {
-                __m128i fr = _mm_load_si128((__m128i *) &blend->front[y * blend->fr_wd + x]);
-                __m128i bk = _mm_load_si128((__m128i *) &blend->back[(y + blend->y_pos) * blend->bk_wd + x + blend->x_pos]);
-
-                __m128i FR = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) fr);
-                __m128i BK = (__m128i) _mm_movehl_ps((__m128) _0, (__m128) bk);
-
-                fr = _mm_cvtepu8_epi16(fr);
-                FR = _mm_cvtepu8_epi16(FR);
-                bk = _mm_cvtepu8_epi16(bk);
-                BK = _mm_cvtepu8_epi16(BK);
-
-                static const __m128i moveA = _mm_set_epi8 (zero, 14, zero, 14, zero, 14, zero, 14,
-                                                           zero,  6, zero,  6, zero,  6, zero,  6);
-                __m128i a = _mm_shuffle_epi8 (fr, moveA);                           
-                __m128i A = _mm_shuffle_epi8 (FR, moveA);
-
-                fr = _mm_mullo_epi16 (fr, a);                                            
-                FR = _mm_mullo_epi16 (FR, A);
-                bk = _mm_mullo_epi16 (bk, _mm_sub_epi16 (_255, a));                     
-                BK = _mm_mullo_epi16 (BK, _mm_sub_epi16 (_255, A));
-
-                __m128i sum = _mm_add_epi16 (fr, bk);                                  
-                __m128i SUM = _mm_add_epi16 (FR, BK);
-
-                static const __m128i moveSum = _mm_set_epi8 ( zero,  zero,  zero, zero, zero, zero, zero, zero,
-                                                                15,    13,    11,    9,    7,    5,    3,    1);
-                sum = _mm_shuffle_epi8 (sum, moveSum);                                
-                SUM = _mm_shuffle_epi8 (SUM, moveSum);
-
-                color = (__m128i) _mm_movelh_ps ((__m128) sum, (__m128) SUM);
+                calcPxl(blend, x, y, &clr);
             }
 
-            _mm_store_si128 ((__m128i *) &blend->new_img[(y + blend->y_pos) * blend->bk_wd + x + blend->x_pos], color);
+            _mm_store_si128 ((__m128i *) &blend->new_img[(y + blend->y_pos) * blend->bk_wd + x + blend->x_pos], clr);
        }
     }
     
