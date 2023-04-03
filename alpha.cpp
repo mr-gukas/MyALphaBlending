@@ -45,7 +45,7 @@ int alphaBlend(blend_t* blend)
                 __m128i SUM = _mm_add_epi16 (FR, BK);
 
                 static const __m128i moveSum = _mm_set_epi8 ( zero,  zero,  zero, zero, zero, zero, zero, zero,
-                                                             15, 13, 11, 9, 7, 5, 3, 1);
+                                                                15,    13,    11,    9,    7,    5,    3,    1);
                 sum = _mm_shuffle_epi8 (sum, moveSum);                                
                 SUM = _mm_shuffle_epi8 (SUM, moveSum);
 
