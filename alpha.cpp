@@ -12,18 +12,19 @@ int alphaBlend(blend_t* blend)
         for (int x = 0; x < blend->fr_wd; x++)
         {
             if (x + blend->x_pos >= blend->bk_wd) break;
-            
+
+            unsigned int new_clr = 0; 
+
             for (int i = 0; i < 100; i++)
-            {
+            { 
                 unsigned int fr_clr = blend->front[x + y * blend->fr_wd];
                 unsigned int bk_clr = blend->back [x + blend->x_pos + 
                                                   (y + blend->y_pos) * blend->bk_wd];
                 
-
                 unsigned char fr_al = fr_clr >> 24;
                 unsigned char bk_al = bk_clr >> 24;
                 
-                unsigned int new_clr =  bk_al << 24;
+                new_clr =  bk_al << 24;
                 
                 for (int idx = 0; idx < 17; idx += 8)
                 {
@@ -33,10 +34,10 @@ int alphaBlend(blend_t* blend)
 
                     new_clr += getColor(FR_CLR, BK_CLR, fr_al) << idx;
                 }
-                
-                blend->new_img[x + blend->x_pos + (y + blend->y_pos) * blend->bk_wd] =
-                    new_clr;
             }
+
+            blend->new_img[x + blend->x_pos + (y + blend->y_pos) * blend->bk_wd] =
+                new_clr;
         }
     }
 

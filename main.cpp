@@ -1,4 +1,5 @@
 #include "alpha.hpp"
+#define __DRAW__ 1
 
 int main(int argc, char* argv[])
 {
@@ -23,7 +24,7 @@ int main(int argc, char* argv[])
 
     window_t win = {};
     windowCtor(&win,&blend);
-    
+
     int first = 1;
     while (win.window.isOpen())
     {
@@ -36,14 +37,16 @@ int main(int argc, char* argv[])
 
         }
 
+        blendCtor(&blend, argv[1], argv[2], atoi(argv[3]), atoi(argv[4]));
         alphaBlend(&blend);
-        
+
         image_t image = {};
         imageCtor(&image, &blend); 
-        
+
         if (first)
         {
-            image.alpha_blend.saveToFile("../img/1.png");
+            blend.bk_img.saveToFile("../img/no_avx.png");
+
             first = 0;
         }
 
@@ -54,7 +57,6 @@ int main(int argc, char* argv[])
         win.window.draw (image.sprite);
         win.window.draw(win.fpsText);
         win.window.display();
-        
     }
  
     return 0;
